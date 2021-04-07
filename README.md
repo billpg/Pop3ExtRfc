@@ -7,14 +7,16 @@ If you have any comments or suggestions for changes, please open an issue on thi
 
 # Source Informal Descriptions
 
-- [A Mailbox Refresh Mechanism][1]
+- [A Commit and Refresh Mechanism][1]
 - [Goodbye to Numeric Message IDs][2]
+- [Delete Immediately][3]
 
-[1]: https://billpg.com/pop3-refr/
+[1]: https://billpg.com/pop3-core/
 [2]: https://billpg.com/pop3-message-ids/
+[3]: https://billpg.com/pop3-deli/
 
 # Resources
 
-- [Prototype POP3 Service][3] that implements these extensions.
+- [Prototype POP3 Service][4] that implements these extensions.
 
-[3]: https://github.com/billpg/pop3svc/
+[4]: https://github.com/billpg/pop3svc/
