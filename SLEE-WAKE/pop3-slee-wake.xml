@@ -9,6 +9,7 @@
 <!ENTITY RFC2119 SYSTEM "http://xml2rfc.tools.ietf.org/public/rfc/bibxml/reference.RFC.2119.xml">
 <!ENTITY RFC2629 SYSTEM "http://xml2rfc.tools.ietf.org/public/rfc/bibxml/reference.RFC.2629.xml">
 <!ENTITY RFC3552 SYSTEM "http://xml2rfc.tools.ietf.org/public/rfc/bibxml/reference.RFC.3552.xml">
+<!ENTITY RFC1939 SYSTEM "http://xml2rfc.tools.ietf.org/public/rfc/bibxml/reference.RFC.1939.xml">
 <!ENTITY I-D.narten-iana-considerations-rfc2434bis SYSTEM "http://xml2rfc.tools.ietf.org/public/rfc/bibxml3/reference.I-D.narten-iana-considerations-rfc2434bis.xml">
 ]>
 <?xml-stylesheet type='text/xsl' href='rfc2629.xslt' ?>
@@ -36,7 +37,7 @@
 <?rfc subcompact="no" ?>
 <!-- keep one blank line between list items -->
 <!-- end of list of popular I-D processing instructions -->
-<rfc category="info" docName="draft-ietf-xml2rfc-template-05" ipr="none">
+<rfc category="info" docName="draft-billpg-pop3-slee-wake-00" ipr="none">
   <!-- category values: std, bcp, info, exp, and historic
      ipr values: full3667, noModification3667, noDerivatives3667
      you can add the attributes updates="NNNN" and obsoletes="NNNN" 
@@ -48,16 +49,14 @@
     <!-- The abbreviated title is used in the page header - it is only necessary if the 
          full title is longer than 39 characters -->
 
-    <title abbrev="Abbreviated Title">Put Your Internet Draft Title
-    Here</title>
+    <title abbrev="Abbreviated Title">POP3 - Commit and Refresh Mechanism</title>
 
     <!-- add 'role="editor"' below for the editors if appropriate -->
 
     <!-- Another author who claims to be an editor -->
 
-    <author fullname="Elwyn Davies" initials="E.B." role="editor"
-            surname="Davies">
-      <organization>Folly Consulting</organization>
+    <author fullname="William Godfrey" initials="W.G." surname="Godfrey">
+      <organization>billpg industries</organization>
 
       <address>
         <postal>
@@ -65,7 +64,7 @@
 
           <!-- Reorder these if your country does things differently -->
 
-          <city>Soham</city>
+          <city></city>
 
           <region></region>
 
@@ -74,15 +73,15 @@
           <country>UK</country>
         </postal>
 
-        <phone>+44 7889 488 335</phone>
+        <phone>+44 1327 828234</phone>
 
-        <email>elwynd@dial.pipex.com</email>
+        <email>billpg@gmail.com</email>
 
         <!-- uri and facsimile elements may also be added -->
       </address>
     </author>
 
-    <date month="March" year="2007" />
+    <date month="December" year="2021" />
 
     <!-- If the month and year are both specified and are the current ones, xml2rfc will fill 
          in the current day for you. If only the current year is specified, xml2rfc will fill 
@@ -102,7 +101,7 @@
 	 If this element is not present, the default is "Network Working Group",
          which is used by the RFC Editor as a nod to the history of the IETF. -->
 
-    <keyword>template</keyword>
+    <keyword>pop3</keyword>
 
     <!-- Keywords will be incorporated into HTML output
          files in a meta tag but they have no effect on text or nroff
@@ -110,15 +109,34 @@
          keywords will be used for the search engine. -->
 
     <abstract>
-      <t>Insert an abstract: MANDATORY. This template is for creating an
-      Internet Draft.</t>
+      <t>An extension to POP3 allowing opened connections to be shelved
+       via a sleeping state, avoiding the const of repeated TCP and TLS 
+       handshakes when polling for new messages.</t>
     </abstract>
   </front>
 
   <middle>
     <section title="Introduction">
-      <t>The original specification of xml2rfc format is in <xref
-      target="RFC2629">RFC&nbsp;2629</xref>.</t>
+      <t>When polling new new messages in a <xref target="RFC1939">POP3</xref> 
+      mailbox, both client and server need to repeatedly re-negotitate TCP and
+      TLS connections as well as re-authenticating every time. Clients need to find a
+      balance between polling too quickly and placing a corresponding burden
+      on systems, and polling too slowly and messages not arriving in a timely 
+      manner.</t>
+
+      <t>By allowing a client, once it has completed downloading and deleting 
+      messages from the mailbox, to put a connection to sleep instread of closing
+      it down, the client is at liberty to resume using the opened connection
+      and so avoid the burden of all the steps needed to reconnect.</t>
+
+      <t>This extension introduces a new state, SLEEP, alongside the established
+      states: AUTHORIZATION, TRANSACTION and UPDATE.</t>
+
+      <t>POP3 is designed to work on a simple bulk-download-and-delete model, 
+      eschewing more advanced features such as folder management. This 
+      extension is compatible with that model as the high-level operation of
+      client and server is unchanged, only adding the ability to shelve
+      opened connections between polls.</t>
 
       <section title="Requirements Language">
         <t>The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT",
@@ -357,6 +375,7 @@ main(int argc, char *argv[])
     <references title="Normative References">
       <!--?rfc include="http://xml2rfc.tools.ietf.org/public/rfc/bibxml/reference.RFC.2119.xml"?-->
       &RFC2119;
+      &RFC1939;
 
       <reference anchor="min_ref">
         <!-- the following is the minimum to make xml2rfc happy -->
