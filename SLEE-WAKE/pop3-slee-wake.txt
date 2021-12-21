@@ -4,11 +4,11 @@
 
 Internet Engineering Task Force                               W. Godfrey
 Internet-Draft                                         billpg industries
-Intended status: Informational                         December 20, 2021
-Expires: June 23, 2022
+Intended status: Informational                         December 21, 2021
+Expires: June 24, 2022
 
 
-                  POP3 - Commit and Refresh Mechanism
+                    POP3 - The SLEEP State Extension
                      draft-billpg-pop3-slee-wake-00
 
 Abstract
@@ -29,7 +29,7 @@ Status of This Memo
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on June 23, 2022.
+   This Internet-Draft will expire on June 24, 2022.
 
 Copyright Notice
 
@@ -53,32 +53,37 @@ Copyright Notice
 
 
 
-Godfrey                   Expires June 23, 2022                 [Page 1]
+Godfrey                   Expires June 24, 2022                 [Page 1]
 
-Internet-Draft              Abbreviated Title              December 2021
+Internet-Draft                POP3 - SLEEP                 December 2021
 
 
 Table of Contents
 
    1.  Introduction  . . . . . . . . . . . . . . . . . . . . . . . .   2
      1.1.  Requirements Language . . . . . . . . . . . . . . . . . .   3
-   2.  Simple List . . . . . . . . . . . . . . . . . . . . . . . . .   3
-   3.  Figures . . . . . . . . . . . . . . . . . . . . . . . . . . .   3
-   4.  Subsections and Tables  . . . . . . . . . . . . . . . . . . .   3
-     4.1.  A Subsection  . . . . . . . . . . . . . . . . . . . . . .   3
-     4.2.  Tables  . . . . . . . . . . . . . . . . . . . . . . . . .   4
-   5.  More about Lists  . . . . . . . . . . . . . . . . . . . . . .   4
-     5.1.  Numbering Lists across Lists and Sections . . . . . . . .   5
-     5.2.  Where the List Numbering Continues  . . . . . . . . . . .   5
-   6.  Example of Code or MIB Module To Be Extracted . . . . . . . .   5
-   7.  Acknowledgements  . . . . . . . . . . . . . . . . . . . . . .   6
-   8.  IANA Considerations . . . . . . . . . . . . . . . . . . . . .   6
-   9.  Security Considerations . . . . . . . . . . . . . . . . . . .   7
-   10. References  . . . . . . . . . . . . . . . . . . . . . . . . .   7
-     10.1.  Normative References . . . . . . . . . . . . . . . . . .   7
-     10.2.  Informative References . . . . . . . . . . . . . . . . .   7
-   Appendix A.  Additional Stuff . . . . . . . . . . . . . . . . . .   8
-   Author's Address  . . . . . . . . . . . . . . . . . . . . . . . .   8
+   2.  Capability  . . . . . . . . . . . . . . . . . . . . . . . . .   3
+     2.1.  SLEEPING Capability . . . . . . . . . . . . . . . . . . .   3
+   3.  The SLEEP State . . . . . . . . . . . . . . . . . . . . . . .   3
+     3.1.  Considerations for other capabilities . . . . . . . . . .   4
+   4.  The SLEE Command  . . . . . . . . . . . . . . . . . . . . . .   4
+   5.  Simple List . . . . . . . . . . . . . . . . . . . . . . . . .   5
+   6.  Figures . . . . . . . . . . . . . . . . . . . . . . . . . . .   5
+   7.  Subsections and Tables  . . . . . . . . . . . . . . . . . . .   5
+     7.1.  A Subsection  . . . . . . . . . . . . . . . . . . . . . .   5
+     7.2.  Tables  . . . . . . . . . . . . . . . . . . . . . . . . .   6
+   8.  More about Lists  . . . . . . . . . . . . . . . . . . . . . .   6
+     8.1.  Numbering Lists across Lists and Sections . . . . . . . .   7
+     8.2.  Where the List Numbering Continues  . . . . . . . . . . .   7
+   9.  Example of Code or MIB Module To Be Extracted . . . . . . . .   7
+   10. Acknowledgements  . . . . . . . . . . . . . . . . . . . . . .   8
+   11. IANA Considerations . . . . . . . . . . . . . . . . . . . . .   8
+   12. Security Considerations . . . . . . . . . . . . . . . . . . .   9
+   13. References  . . . . . . . . . . . . . . . . . . . . . . . . .   9
+     13.1.  Normative References . . . . . . . . . . . . . . . . . .   9
+     13.2.  Informative References . . . . . . . . . . . . . . . . .   9
+   Appendix A.  Additional Stuff . . . . . . . . . . . . . . . . . .  10
+   Author's Address  . . . . . . . . . . . . . . . . . . . . . . . .  10
 
 1.  Introduction
 
@@ -101,18 +106,16 @@ Table of Contents
    POP3 is designed to work on a simple bulk-download-and-delete model,
    eschewing more advanced features such as folder management.  This
    extension is compatible with that model as the high-level operation
+
+
+
+Godfrey                   Expires June 24, 2022                 [Page 2]
+
+Internet-Draft                POP3 - SLEEP                 December 2021
+
+
    of client and server is unchanged, only adding the ability to shelve
    opened connections between polls.
-
-
-
-
-
-
-Godfrey                   Expires June 23, 2022                 [Page 2]
-
-Internet-Draft              Abbreviated Title              December 2021
-
 
 1.1.  Requirements Language
 
@@ -120,7 +123,119 @@ Internet-Draft              Abbreviated Title              December 2021
    "SHOULD", "SHOULD NOT", "RECOMMENDED", "MAY", and "OPTIONAL" in this
    document are to be interpreted as described in RFC 2119 [RFC2119].
 
-2.  Simple List
+2.  Capability
+
+   A service implementing this extension indicates support by including
+   the capability "SLEEPING" in response to a CAPA command.
+
+2.1.  SLEEPING Capability
+
+   CAPA tag:
+           SLEEPING
+
+   Arguments:
+           none
+
+   Added commands:
+           SLEE, WAKE
+
+   Announced states / possible differences:
+           both / no
+
+   Commands valid in states:
+           SLEE in TRANSACTION, WAKE in SLEEP
+
+   Specification reference:
+           This document
+
+   Discussion:
+           The SLEEP capability indicates the optional SLEE and WAKE
+           commands are available and the SLEEP state is supported.
+
+3.  The SLEEP State
+
+   This RFC introduces the SLEEP state, alongside the established states
+   of AUTHORIZATION, TRANSACTION and UPDATE.  An opened connection
+   enters the SLEEP state on a +OK success response to a SLEE command
+   and leaves it on a +OK response to a WAKE or QUIT command.
+
+   During the SLEEP state, the server MUST support these commands: NOOP,
+   QUIT, WAKE.
+
+
+
+
+Godfrey                   Expires June 24, 2022                 [Page 3]
+
+Internet-Draft                POP3 - SLEEP                 December 2021
+
+
+      NOTE: This document STRONGLY encourages that during a sleep state,
+      service implementations return error responses to any command
+      other that the three listed above, even if that service could
+      perform the requested command.  This will assist those developing
+      clients from wrongly assuming commands such STAT or UIDL could be
+      used during a SLEEP state to poll for new messages.
+
+      NOTE: This document STRONGLY encourages services that place a lock
+      on a mailbox during a TRANSACTION state, rejecting concurrent
+      requests, release those locks during a SLEEP state and allow other
+      concurrent requests.  It is permitted for the WAKE command to fail
+      with a -ERR failure response if a separate connection has taken
+      the lock for the mailbox during the SLEEP state.
+
+3.1.  Considerations for other capabilities
+
+   CAPA is not on the list of commands that are valid to use during the
+   SLEEP state.
+
+   Registered capabilities include a statement to which states each
+   capability may be announced in, often using "both" as a shorthand for
+   "both the AUTHOIZATION and TRANSACTION states".  As this document
+   does not introduce a new state when the CAPA command may be used,
+   this document does not change the meaning of the capabilities
+   registered.
+
+4.  The SLEE Command
+
+   The POP3 SLEE command requests that the POP3 service take the
+   following steps:
+
+   o  All actions that take place on a successful QUIT command and
+      UPDATE state, except for closing down the channel over which
+      commands and responses are sent and received.
+
+   o  The connection transitions to the SLEEP state.
+
+   If the service cannot perform these steps, it MUST return an error
+   (-ERR) response and leave the state of the mailbox and opened
+   connection unchanged.
+
+   On the succesful completion of the SLEE command including successful
+   transition to the SLEEP state, the service MUST respond with a
+   success response (+OK) to indicate to the client it's request was
+   succesful.  A client MUST wait for a response before sending
+   additional commands, regardless of the PIPELINING capability.
+
+
+
+
+
+Godfrey                   Expires June 24, 2022                 [Page 4]
+
+Internet-Draft                POP3 - SLEEP                 December 2021
+
+
+      NOTE: Messages flagged for deletion by DELE [RFC1939] are finally
+      deleted by the SLEE command as well as by the QUIT command.  Other
+      POP3 extensions might allow for a mailbox to be modifed, but
+      similar to DELE, the modification is documented to be diferred
+      until committed by a QUIT command.  In this case, those
+      modifications would be committed by the SLEE command too.  The
+      only difference between SLEE is QUIT is that with SLEE, the
+      communciations channel, including TCP and TLS, remain open.
+
+5.  Simple List
 
    List styles: 'empty', 'symbols', 'letters', 'numbers', 'hanging',
    'format'.
@@ -131,7 +246,7 @@ Internet-Draft              Abbreviated Title              December 2021
 
    You can write text here as well.
 
-3.  Figures
+6.  Figures
 
    Figures should not exceed 69 characters wide to allow for the indent
    of sections.
@@ -152,9 +267,9 @@ Internet-Draft              Abbreviated Title              December 2021
    anchor.  White space, both horizontal and vertical, is significant in
    figures even if you don't use CDATA.
 
-4.  Subsections and Tables
+7.  Subsections and Tables
 
-4.1.  A Subsection
+7.1.  A Subsection
 
    By default 3 levels of nesting show in table of contents but that can
    be adjusted with the value of the "tocdepth" processing instruction.
@@ -162,15 +277,12 @@ Internet-Draft              Abbreviated Title              December 2021
 
 
 
-
-
-
-Godfrey                   Expires June 23, 2022                 [Page 3]
+Godfrey                   Expires June 24, 2022                 [Page 5]
 
-Internet-Draft              Abbreviated Title              December 2021
+Internet-Draft                POP3 - SLEEP                 December 2021
 
 
-4.2.  Tables
+7.2.  Tables
 
    .. are very similar to figures:
 
@@ -189,7 +301,7 @@ Internet-Draft              Abbreviated Title              December 2021
 
                        Table 1: A Very Simple Table
 
-5.  More about Lists
+8.  More about Lists
 
    Lists with 'hanging labels': the list item is indented the amount of
    the hangIndent:
@@ -221,12 +333,12 @@ Internet-Draft              Abbreviated Title              December 2021
 
 
 
-Godfrey                   Expires June 23, 2022                 [Page 4]
+Godfrey                   Expires June 24, 2022                 [Page 6]
 
-Internet-Draft              Abbreviated Title              December 2021
+Internet-Draft                POP3 - SLEEP                 December 2021
 
 
-5.1.  Numbering Lists across Lists and Sections
+8.1.  Numbering Lists across Lists and Sections
 
    Numbering items continuously although they are in separate <list>
    elements, maybe in separate sections using the "format" style and a
@@ -250,7 +362,7 @@ Internet-Draft              Abbreviated Title              December 2021
 
    R6  #6
 
-5.2.  Where the List Numbering Continues
+8.2.  Where the List Numbering Continues
 
    List continues here.
 
@@ -266,7 +378,7 @@ Internet-Draft              Abbreviated Title              December 2021
 
    The end of the list.
 
-6.  Example of Code or MIB Module To Be Extracted
+9.  Example of Code or MIB Module To Be Extracted
 
 
 
@@ -277,9 +389,9 @@ Internet-Draft              Abbreviated Title              December 2021
 
 
 
-Godfrey                   Expires June 23, 2022                 [Page 5]
+Godfrey                   Expires June 24, 2022                 [Page 7]
 
-Internet-Draft              Abbreviated Title              December 2021
+Internet-Draft                POP3 - SLEEP                 December 2021
 
 
    The <artwork> element has a number of extra attributes that can be
@@ -316,7 +428,7 @@ Internet-Draft              Abbreviated Title              December 2021
    /* end of file */
 
 
-7.  Acknowledgements
+10.  Acknowledgements
 
    This template was derived from an initial version written by Pekka
    Savola and contributed by him to the xml2rfc project.
@@ -324,7 +436,7 @@ Internet-Draft              Abbreviated Title              December 2021
    This document is part of a plan to make xml2rfc indispensable
    [DOMINATION].
 
-8.  IANA Considerations
+11.  IANA Considerations
 
    This memo includes no request to IANA.
 
@@ -333,9 +445,9 @@ Internet-Draft              Abbreviated Title              December 2021
 
 
 
-Godfrey                   Expires June 23, 2022                 [Page 6]
+Godfrey                   Expires June 24, 2022                 [Page 8]
 
-Internet-Draft              Abbreviated Title              December 2021
+Internet-Draft                POP3 - SLEEP                 December 2021
 
 
    for a guide).  If the draft does not require IANA to do anything, the
@@ -343,14 +455,14 @@ Internet-Draft              Abbreviated Title              December 2021
    above).  If there are no requirements for IANA, the section will be
    removed during conversion into an RFC by the RFC Editor.
 
-9.  Security Considerations
+12.  Security Considerations
 
    All drafts are required to have a security considerations section.
    See RFC 3552 [RFC3552] for a guide.
 
-10.  References
+13.  References
 
-10.1.  Normative References
+13.1.  Normative References
 
    [min_ref]  authSurName, authInitials., "Minimal Reference", 2006.
 
@@ -363,7 +475,7 @@ Internet-Draft              Abbreviated Title              December 2021
               DOI 10.17487/RFC2119, March 1997,
               <https://www.rfc-editor.org/info/rfc2119>.
 
-10.2.  Informative References
+13.2.  Informative References
 
    [DOMINATION]
               Mad Dominators, Inc., "Ultimate Plan for Taking Over the
@@ -389,9 +501,9 @@ Internet-Draft              Abbreviated Title              December 2021
 
 
 
-Godfrey                   Expires June 23, 2022                 [Page 7]
+Godfrey                   Expires June 24, 2022                 [Page 9]
 
-Internet-Draft              Abbreviated Title              December 2021
+Internet-Draft                POP3 - SLEEP                 December 2021
 
 
 Appendix A.  Additional Stuff
@@ -445,4 +557,4 @@ Author's Address
 
 
 
-Godfrey                   Expires June 23, 2022                 [Page 8]
+Godfrey                   Expires June 24, 2022                [Page 10]

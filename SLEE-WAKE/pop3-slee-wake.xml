@@ -49,7 +49,7 @@
     <!-- The abbreviated title is used in the page header - it is only necessary if the 
          full title is longer than 39 characters -->
 
-    <title abbrev="Abbreviated Title">POP3 - Commit and Refresh Mechanism</title>
+    <title abbrev="POP3 - SLEEP">POP3 - The SLEEP State Extension</title>
 
     <!-- add 'role="editor"' below for the editors if appropriate -->
 
@@ -144,6 +144,109 @@
         document are to be interpreted as described in <xref
         target="RFC2119">RFC 2119</xref>.</t>
       </section>
+    </section>
+
+    <section anchor="capability" title="Capability">
+      <t>A service implementing this extension indicates support by including
+      the capability "SLEEPING" in response to a CAPA command.</t>
+
+      <section anchor="iana_capa_sleeping" title="SLEEPING Capability">
+        <t>
+          <list hangIndent="8" style="hanging">
+
+            <t hangText="CAPA tag:"><vspace blankLines="0" />SLEEPING</t>
+            <t hangText="Arguments:"><vspace blankLines="0" />none</t>
+            <t hangText="Added commands:"><vspace blankLines="0" />SLEE, WAKE</t>
+            <t hangText="Announced states / possible differences:"><vspace blankLines="0" />both / no</t>
+            <t hangText="Commands valid in states:"><vspace blankLines="0" />SLEE in TRANSACTION, WAKE in SLEEP</t>
+            <t hangText="Specification reference:"><vspace blankLines="0" />This document</t>
+            <t hangText="Discussion:"><vspace blankLines="0" />
+              The SLEEP capability indicates the optional SLEE and WAKE commands are available and the SLEEP state
+              is supported.
+            </t>
+          </list>
+        </t>
+      </section>
+    </section>
+
+    <section anchor="sleepstate" title="The SLEEP State">
+      <t>
+      This RFC introduces the SLEEP state, alongside the established states of AUTHORIZATION, TRANSACTION and UPDATE. An 
+      opened connection enters the SLEEP state on a +OK success response to a SLEE command and leaves it on a +OK response
+      to a WAKE or QUIT command.
+      </t>
+
+      <t>
+      During the SLEEP state, the server MUST support these commands: NOOP, QUIT, WAKE.
+      </t>
+
+      <t>
+        <list hangIndent="10" style="empty">
+          <t>
+            NOTE: This document STRONGLY encourages that during a sleep state, service implementations return error
+            responses to any command other that the three listed above, even if that service could perform the requested 
+            command. This will assist those developing clients from wrongly assuming commands such STAT or UIDL could 
+            be used during a SLEEP state to poll for new messages.
+          </t>
+
+          <t>
+            NOTE: This document STRONGLY encourages services that place a lock on a mailbox during a TRANSACTION state,
+            rejecting concurrent requests, release those locks during a SLEEP state and allow other concurrent requests.
+            It is permitted for the WAKE command to fail with a -ERR failure response if a separate connection has taken the
+            lock for the mailbox during the SLEEP state.
+          </t>
+        </list>
+      </t>
+
+      <section anchor="other_capabilities" title="Considerations for other capabilities">
+        <t>CAPA is not on the list of commands that are valid to use during the SLEEP state.</t>
+
+        <t>
+        Registered capabilities include a statement to which states each capability may be announced in, often using "both" as a
+        shorthand for "both the AUTHOIZATION and TRANSACTION states". As this document does not introduce a new state when the
+        CAPA command may be used, this document does not change the meaning of the capabilities registered.
+        </t>
+      </section>
+    </section>
+
+    <section anchor="slecommand" title="The SLEE Command">
+      <t>
+      The POP3 SLEE command requests that the POP3 service take the following steps:
+        <list style="symbols">
+          <t>
+          All actions that take place on a successful QUIT command and UPDATE state, except for closing down the channel over which 
+          commands and responses are sent and received.
+          </t>
+
+          <t>
+          The connection transitions to the SLEEP state.
+          </t>
+        </list>      
+     </t>
+
+     <t>
+     If the service cannot perform these steps, it MUST return an error (-ERR) response and leave the state of the mailbox and
+     opened connection unchanged.
+     </t>
+
+     <t>
+     On the succesful completion of the SLEE command including successful transition to the SLEEP state, the service MUST respond
+     with a success response (+OK) to indicate to the client it's request was succesful. A client MUST wait for a response
+     before sending additional commands, regardless of the PIPELINING capability.
+     </t>
+
+      <t>
+        <list hangIndent="10" style="empty">
+          <t>
+            NOTE: Messages flagged for deletion by <xref target="RFC1939">DELE</xref> are finally deleted by the SLEE command
+            as well as by the QUIT command. Other POP3 extensions might allow for a mailbox to be modifed, but similar to 
+            DELE, the modification is documented to be diferred until committed by a QUIT command. In this case, those
+            modifications would be committed by the SLEE command too. The only difference between SLEE is QUIT is that with SLEE,
+            the communciations channel, including TCP and TLS, remain open.
+          </t>
+        </list>
+      </t>  
+
     </section>
 
     <section anchor="simple_list" title="Simple List">
