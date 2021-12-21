@@ -4,7 +4,7 @@
 
 Internet Engineering Task Force                               W. Godfrey
 Internet-Draft                                         billpg industries
-Intended status: Informational                         December 21, 2021
+Intended status: Standards Track                       December 21, 2021
 Expires: June 24, 2022
 
 
