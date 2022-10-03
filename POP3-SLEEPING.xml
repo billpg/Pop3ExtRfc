@@ -1,0 +1,203 @@
+<?xml version="1.0" encoding="US-ASCII"?>
+
+<?rfc strict="yes" ?>
+<?rfc toc="yes"?>
+<?rfc tocdepth="4"?>
+<?rfc symrefs="yes"?>
+<?rfc sortrefs="yes" ?>
+<?rfc compact="yes" ?>
+<?rfc subcompact="no" ?>
+<rfc category="std" docName="draft-billpg-pop3-sleeping-00" ipr="none" submissionType="IETF" consensus="true"
+    xmlns:xi="http://www.w3.org/2001/XInclude">
+
+
+    <front>
+        <title abbrev="POP3-SLEEPING">POP3 - SLEEPING Extension</title>
+        <author fullname="William Godfrey" initials="W." surname="Godfrey">
+            <organization>billpg industries</organization>
+            <address>
+                <uri>https://billpg.com/</uri>
+            </address>
+        </author>
+        <date month="October" year="2022" />
+        <area>General</area>
+        <workgroup>Internet Engineering Task Force</workgroup>
+        <keyword>pop3</keyword>
+        <abstract>
+            <t>
+                An extension to POP3 allowing opened connections to be 
+                shelved, avoiding the const of repeated TCP and TLS handshakes 
+                when polling for new messages and for message deletes to be 
+                committed without having to disconnect.
+            </t>
+        </abstract>
+    </front>
+
+    <middle>
+        <section title="Introduction">
+
+            <t>
+                When polling for new messages in a <xref target="RFC1939">POP3</xref> 
+                mailbox, both client and server need to repeatedly re-negotitate TCP and
+                TLS and re-authenticate every time the client attempts to poll for new messages.
+                By allowing a client to keep an underying connection open instead of closing
+                it down, the client is at liberty to resume using the opened connection at 
+                a later time and so avoid the burden of all the steps needed to reconnect.
+            </t>
+
+            <t>
+                This document specifies an extension that enables this mode of operation.
+                It introduces a new SLEEP state, alongside the established
+                states, with commands to enter and leave this new state. During the SLEEP state, 
+                the client remains authenticated and the underlying connection remains open, but 
+                the associated mailbox is unlocked and inaccessable.
+            </t>
+
+            <t>
+                The underlying connection that remains open includes the TLS channel if present, 
+                including if that channel was opened by an explicit <xref target="RFC2595">STLS command</xref>
+                or implied by <xref target="RFC8314">use of TCP port 995</xref>.
+            </t>
+                
+            <t>
+                 Furthermore, the command to 
+                leave the TRANSACTION state and enter SLEEP will also commit any pending message deletes
+                made with the DELE command that would otherwise only be committed at the QUIT command.
+            </t>
+
+            <t>
+                POP3 is designed to work on a simple bulk-download-and-delete model, 
+                eschewing more advanced features such as folder management. This 
+                extension is compatible with that model as the high-level operation of
+                client and server is unchanged, only adding the ability to shelve an
+                opened connection between polls.
+            </t>
+
+            <section title="Requirements Language">
+                <t>
+                    The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT",
+                    "SHOULD", "SHOULD NOT", "RECOMMENDED", "MAY", and "OPTIONAL" in this
+                    document are to be interpreted as described in 
+                    <xref target="RFC2119">RFC 2119</xref>.
+                </t>
+            </section>
+        </section>
+
+    <section anchor="capability" title="Capability">
+      <t>A service implementing this extension indicates support by including
+      the capability "SLEEPING" in response to a CAPA command.</t>
+
+      <section anchor="iana_capa_sleeping" title="SLEEPING Capability">
+        <t>
+          <list hangIndent="8" style="hanging">
+
+            <t hangText="CAPA tag:"><vspace blankLines="0" />SLEEPING</t>
+            <t hangText="Arguments:"><vspace blankLines="0" />none</t>
+            <t hangText="Added commands:"><vspace blankLines="0" />SLEE, WAKE</t>
+            <t hangText="Announced states / possible differences:"><vspace blankLines="0" />both / no</t>
+            <t hangText="Commands valid in states:"><vspace blankLines="0" />SLEE in TRANSACTION, WAKE in SLEEP</t>
+            <t hangText="Specification reference:"><vspace blankLines="0" />This document</t>
+            <t hangText="Discussion:"><vspace blankLines="0" />
+              The SLEEPING capability indicates the optional SLEE and WAKE commands are available and the SLEEP state
+              is supported.
+            </t>
+          </list>
+        </t>
+      </section>
+    </section>
+
+    <section anchor="sleepstate" title="The SLEEP State">
+      <t>
+      This RFC introduces the SLEEP state, alongside the established states of AUTHORIZATION, TRANSACTION and UPDATE. An 
+      opened connection enters the SLEEP state on a +OK success response to a SLEE command and leaves it on a +OK response
+      to a WAKE or QUIT command.
+      </t>
+
+      <t>
+      During the SLEEP state, the server MUST support these commands: NOOP, QUIT, WAKE.
+      </t>
+
+      <t>
+        <list hangIndent="10" style="empty">
+          <t>
+            NOTE: This document STRONGLY encourages that during a sleep state, service implementations return error
+            responses to any command other that the three listed above. This will assist those developing clients 
+            from wrongly assuming commands such STAT or UIDL could be used during a SLEEP state to poll for new messages.
+          </t>
+
+          <t>
+            NOTE: This document STRONGLY encourages those services that place a lock on a mailbox during a TRANSACTION state
+            to release those locks during a SLEEP state and allow other concurrent requests.
+            It is permitted for the WAKE command to fail with a "-ERR [INUSE]" failure response if a separate connection has taken the
+            lock for the mailbox during the SLEEP state.
+          </t>
+        </list>
+      </t>
+
+      <section anchor="other_capabilities" title="Considerations for other capabilities">
+        <t>"CAPA" <xref target="RFC2449" /> is not on the list of commands that are valid to use during the SLEEP state.</t>
+
+        <t>
+        Registered capabilities include a statement to which states each capability may be announced in, often using "both" as a
+        shorthand for "both the AUTHOIZATION and TRANSACTION states". As this document does not introduce a new state when the
+        CAPA command may be used, this document does not change the meaning of the capabilities registered.
+        </t>
+      </section>
+    </section>
+
+    <section anchor="slecommand" title="The SLEE Command">
+      <t>
+      The POP3 SLEE command requests that the POP3 service take the following steps:
+        <list style="symbols">
+          <t>
+          All actions that take place on a successful QUIT command and UPDATE state, except for closing down the channel over which 
+          commands and responses are sent and received.
+          </t>
+
+          <t>
+          The connection transitions to the SLEEP state.
+          </t>
+        </list>      
+     </t>
+
+     <t>
+     If the service cannot perform these steps, it MUST return an error (-ERR) response and leave the state of the mailbox and
+     opened connection unchanged.
+     </t>
+
+     <t>
+     On the succesful completion of the SLEE command including successful transition to the SLEEP state, the service MUST respond
+     with a success response (+OK) to indicate to the client it's request was succesful. A client MUST wait for a response
+     before sending additional commands, regardless of the PIPELINING capability.
+     </t>
+
+      <t>
+        <list hangIndent="10" style="empty">
+          <t>
+            NOTE: Messages flagged for deletion by <xref target="RFC1939">DELE</xref> are finally deleted by the SLEE command
+            as well as by the QUIT command. Other POP3 extensions might allow for a mailbox to be modifed, but similar to 
+            DELE, the modification is documented to be diferred until committed by a QUIT command. In this case, those
+            modifications would be committed by the SLEE command too. The only difference between SLEE is QUIT is that with SLEE,
+            the communciations channel, including TCP and TLS, remain open.
+          </t>
+        </list>
+      </t>  
+
+    </section>
+
+
+    </middle>
+
+    <back>
+        <references title="Normative References">
+            <xi:include href="http://xml2rfc.tools.ietf.org/public/rfc/bibxml/reference.RFC.2119.xml"/>
+            <xi:include href="http://xml2rfc.tools.ietf.org/public/rfc/bibxml/reference.RFC.1939.xml"/>
+            <xi:include href="http://xml2rfc.tools.ietf.org/public/rfc/bibxml/reference.RFC.2595.xml"/>
+            <xi:include href="http://xml2rfc.tools.ietf.org/public/rfc/bibxml/reference.RFC.8314.xml"/>
+            <xi:include href="http://xml2rfc.tools.ietf.org/public/rfc/bibxml/reference.RFC.2449.xml"/>
+        </references>
+    </back>
+
+</rfc>
+
+
