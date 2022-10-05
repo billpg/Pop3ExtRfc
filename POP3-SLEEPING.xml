@@ -26,7 +26,7 @@
         <abstract>
             <t>
                 An extension to POP3 allowing opened connections to be 
-                shelved, avoiding the const of repeated TCP and TLS handshakes 
+                shelved, avoiding the cost of repeated TCP and TLS handshakes 
                 when polling for new messages and for message deletes to be 
                 committed without having to disconnect.
             </t>
@@ -98,8 +98,8 @@
             <t hangText="Commands valid in states:"><vspace blankLines="0" />SLEE in TRANSACTION, WAKE in SLEEP</t>
             <t hangText="Specification reference:"><vspace blankLines="0" />This document</t>
             <t hangText="Discussion:"><vspace blankLines="0" />
-              The SLEEPING capability indicates the optional SLEE and WAKE commands are available and the SLEEP state
-              is supported.
+              The presence of the "SLEEPING" capability indicates the SLEEP state is supported and that the 
+              SLEE and WAKE commands are supported to enter and leave this new state.
             </t>
           </list>
         </t>
@@ -108,14 +108,22 @@
 
     <section anchor="sleepstate" title="The SLEEP State">
       <t>
-      This RFC introduces the SLEEP state, alongside the established states of AUTHORIZATION, TRANSACTION and UPDATE. An 
-      opened connection enters the SLEEP state on a +OK success response to a SLEE command and leaves it on a +OK response
-      to a WAKE or QUIT command.
+      This RFC introduces the SLEEP state, alongside the established states of AUTHORIZATION, TRANSACTION and UPDATE.
       </t>
 
-      <t>
-      During the SLEEP state, the server MUST support these commands: NOOP, QUIT, WAKE.
-      </t>
+      <t>During a SLEEP state, the underlying TCP and TLS connections remain open and active. Access tp the mailbox 
+      is not possible but the client onetheless remains athenticated during this time.</t>
+
+      <t>A client requests an opened connection enters the SLEEP state from the TRANSACTION state by a SLEE command. 
+      If the server responds with a success +OK respose, the connection MUST exit the TRANSACTION state and enter
+      the SLEEP state. If the server responds with a failure -ERR response, the opened connection MUST remain in the
+      TRANSACTION stete.</t>
+
+      <t>A client requests an opened connection returns to the TRANSACTION state by a WAKE command. If the server responds
+      with a success +OK response, the collection MUST exit the SLEEP state and return to the TRANSACION state. If the 
+      server responds with a failure -ERR response, the opened connection MUST remain in the SLEEP state.</t>
+      
+      <t>During the SLEEP state, the server MUST support these commands: NOOP, QUIT, WAKE.</t>
 
       <t>
         <list hangIndent="10" style="empty">
@@ -133,6 +141,7 @@
           </t>
         </list>
       </t>
+    </section>
 
       <section anchor="other_capabilities" title="Considerations for other capabilities">
         <t>"CAPA" <xref target="RFC2449" /> is not on the list of commands that are valid to use during the SLEEP state.</t>
@@ -143,50 +152,30 @@
         CAPA command may be used, this document does not change the meaning of the capabilities registered.
         </t>
       </section>
-    </section>
 
     <section anchor="slecommand" title="The SLEE Command">
-      <t>
-      The POP3 SLEE command requests that the POP3 service take the following steps:
-        <list style="symbols">
-          <t>
-          All actions that take place on a successful QUIT command and UPDATE state, except for closing down the channel over which 
-          commands and responses are sent and received.
-          </t>
 
-          <t>
-          The connection transitions to the SLEEP state.
-          </t>
-        </list>      
-     </t>
+      <t>The client sends a SLEE command to complete a TRANSACTION state session. Any messages that were flagged for deletion by
+       DELE (and not reverted by RSET) MUST be deleted by the server if it responds with a +OK success response.</t>
 
-     <t>
-     If the service cannot perform these steps, it MUST return an error (-ERR) response and leave the state of the mailbox and
-     opened connection unchanged.
-     </t>
+      <t>The client MUST wait for a response to this command before sending any new comands, regardless of the 
+      <xref target="RFC2449">PIPELINING</xref> capability.</t>
 
-     <t>
-     On the succesful completion of the SLEE command including successful transition to the SLEEP state, the service MUST respond
-     with a success response (+OK) to indicate to the client it's request was succesful. A client MUST wait for a response
-     before sending additional commands, regardless of the PIPELINING capability.
-     </t>
+      <t>A service that responds with a success +OK response to a SLEE command MUST have completed both these steps. 
+      If the service cannot perform these steps, it MUST return an error -ERR response and leave the state of the mailbox unchnaged.</t>
+    </section>
 
-      <t>
-        <list hangIndent="10" style="empty">
-          <t>
-            NOTE: Messages flagged for deletion by <xref target="RFC1939">DELE</xref> are finally deleted by the SLEE command
-            as well as by the QUIT command. Other POP3 extensions might allow for a mailbox to be modifed, but similar to 
-            DELE, the modification is documented to be diferred until committed by a QUIT command. In this case, those
-            modifications would be committed by the SLEE command too. The only difference between SLEE is QUIT is that with SLEE,
-            the communciations channel, including TCP and TLS, remain open.
-          </t>
-        </list>
-      </t>  
+    <section anchor="wakecommand" title="The WAKE Command">
+    </section>
 
+    <section anchor="noopcommand" title="The NOOP Command">
+    </section>
+
+    <section anchor="quitcommand" title="The QUIT Command">
     </section>
 
 
-    </middle>
+  </middle>
 
     <back>
         <references title="Normative References">

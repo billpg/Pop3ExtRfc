@@ -13,9 +13,9 @@ Internet Engineering Task Force                               W. Godfrey
 Abstract
 
    An extension to POP3 allowing opened connections to be shelved,
-   avoiding the const of repeated TCP and TLS handshakes when polling
-   for new messages and for message deletes to be committed without
-   having to disconnect.
+   avoiding the cost of repeated TCP and TLS handshakes when polling for
+   new messages and for message deletes to be committed without having
+   to disconnect.
 
 Table of Contents
 
@@ -24,10 +24,13 @@ Table of Contents
    2.  Capability  . . . . . . . . . . . . . . . . . . . . . . . . .   2
      2.1.  SLEEPING Capability . . . . . . . . . . . . . . . . . . .   2
    3.  The SLEEP State . . . . . . . . . . . . . . . . . . . . . . .   3
-     3.1.  Considerations for other capabilities . . . . . . . . . .   3
-   4.  The SLEE Command  . . . . . . . . . . . . . . . . . . . . . .   3
-   5.  Normative References  . . . . . . . . . . . . . . . . . . . .   4
-   Author's Address  . . . . . . . . . . . . . . . . . . . . . . . .   4
+   4.  Considerations for other capabilities . . . . . . . . . . . .   3
+   5.  The SLEE Command  . . . . . . . . . . . . . . . . . . . . . .   4
+   6.  The WAKE Command  . . . . . . . . . . . . . . . . . . . . . .   4
+   7.  The NOOP Command  . . . . . . . . . . . . . . . . . . . . . .   4
+   8.  The QUIT Command  . . . . . . . . . . . . . . . . . . . . . .   4
+   9.  Normative References  . . . . . . . . . . . . . . . . . . . .   4
+   Author's Address  . . . . . . . . . . . . . . . . . . . . . . . .   5
 
 1.  Introduction
 
@@ -46,9 +49,6 @@ Table of Contents
    underlying connection remains open, but the associated mailbox is
    unlocked and inaccessable.
 
-   The underlying connection that remains open includes the TLS channel
-   if present, including if that channel was opened by an explicit STLS
-   command [RFC2595] or implied by use of TCP port 995 [RFC8314].
 
 
 
@@ -57,6 +57,10 @@ Godfrey                      Standards Track                    [Page 1]
 
                               POP3-SLEEPING                 October 2022
 
+
+   The underlying connection that remains open includes the TLS channel
+   if present, including if that channel was opened by an explicit STLS
+   command [RFC2595] or implied by use of TCP port 995 [RFC8314].
 
    Furthermore, the command to leave the TRANSACTION state and enter
    SLEEP will also commit any pending message deletes made with the DELE
@@ -99,10 +103,6 @@ Godfrey                      Standards Track                    [Page 1]
    Specification reference:
            This document
 
-   Discussion:
-           The SLEEPING capability indicates the optional SLEE and WAKE
-           commands are available and the SLEEP state is supported.
-
 
 
 
@@ -114,12 +114,32 @@ Godfrey                      Standards Track                    [Page 2]
                               POP3-SLEEPING                 October 2022
 
 
+   Discussion:
+           The presence of the "SLEEPING" capability indicates the SLEEP
+           state is supported and that the SLEE and WAKE commands are
+           supported to enter and leave this new state.
+
 3.  The SLEEP State
 
    This RFC introduces the SLEEP state, alongside the established states
-   of AUTHORIZATION, TRANSACTION and UPDATE.  An opened connection
-   enters the SLEEP state on a +OK success response to a SLEE command
-   and leaves it on a +OK response to a WAKE or QUIT command.
+   of AUTHORIZATION, TRANSACTION and UPDATE.
+
+   During a SLEEP state, the underlying TCP and TLS connections remain
+   open and active.  Access tp the mailbox is not possible but the
+   client onetheless remains athenticated during this time.
+
+   A client requests an opened connection enters the SLEEP state from
+   the TRANSACTION state by a SLEE command.  If the server responds with
+   a success +OK respose, the connection MUST exit the TRANSACTION state
+   and enter the SLEEP state.  If the server responds with a failure
+   -ERR response, the opened connection MUST remain in the TRANSACTION
+   stete.
+
+   A client requests an opened connection returns to the TRANSACTION
+   state by a WAKE command.  If the server responds with a success +OK
+   response, the collection MUST exit the SLEEP state and return to the
+   TRANSACION state.  If the server responds with a failure -ERR
+   response, the opened connection MUST remain in the SLEEP state.
 
    During the SLEEP state, the server MUST support these commands: NOOP,
    QUIT, WAKE.
@@ -137,30 +157,10 @@ Godfrey                      Standards Track                    [Page 2]
       failure response if a separate connection has taken the lock for
       the mailbox during the SLEEP state.
 
-3.1.  Considerations for other capabilities
+4.  Considerations for other capabilities
 
    "CAPA" [RFC2449] is not on the list of commands that are valid to use
    during the SLEEP state.
-
-   Registered capabilities include a statement to which states each
-   capability may be announced in, often using "both" as a shorthand for
-   "both the AUTHOIZATION and TRANSACTION states".  As this document
-   does not introduce a new state when the CAPA command may be used,
-   this document does not change the meaning of the capabilities
-   registered.
-
-4.  The SLEE Command
-
-   The POP3 SLEE command requests that the POP3 service take the
-   following steps:
-
-   *  All actions that take place on a successful QUIT command and
-      UPDATE state, except for closing down the channel over which
-      commands and responses are sent and received.
-
-   *  The connection transitions to the SLEEP state.
-
-
 
 
 
@@ -170,26 +170,35 @@ Godfrey                      Standards Track                    [Page 3]
                               POP3-SLEEPING                 October 2022
 
 
-   If the service cannot perform these steps, it MUST return an error
-   (-ERR) response and leave the state of the mailbox and opened
-   connection unchanged.
+   Registered capabilities include a statement to which states each
+   capability may be announced in, often using "both" as a shorthand for
+   "both the AUTHOIZATION and TRANSACTION states".  As this document
+   does not introduce a new state when the CAPA command may be used,
+   this document does not change the meaning of the capabilities
+   registered.
 
-   On the succesful completion of the SLEE command including successful
-   transition to the SLEEP state, the service MUST respond with a
-   success response (+OK) to indicate to the client it's request was
-   succesful.  A client MUST wait for a response before sending
-   additional commands, regardless of the PIPELINING capability.
+5.  The SLEE Command
 
-      NOTE: Messages flagged for deletion by DELE [RFC1939] are finally
-      deleted by the SLEE command as well as by the QUIT command.  Other
-      POP3 extensions might allow for a mailbox to be modifed, but
-      similar to DELE, the modification is documented to be diferred
-      until committed by a QUIT command.  In this case, those
-      modifications would be committed by the SLEE command too.  The
-      only difference between SLEE is QUIT is that with SLEE, the
-      communciations channel, including TCP and TLS, remain open.
+   The client sends a SLEE command to complete a TRANSACTION state
+   session.  Any messages that were flagged for deletion by DELE (and
+   not reverted by RSET) MUST be deleted by the server if it responds
+   with a +OK success response.
 
-5.  Normative References
+   The client MUST wait for a response to this command before sending
+   any new comands, regardless of the PIPELINING [RFC2449] capability.
+
+   A service that responds with a success +OK response to a SLEE command
+   MUST have completed both these steps.  If the service cannot perform
+   these steps, it MUST return an error -ERR response and leave the
+   state of the mailbox unchnaged.
+
+6.  The WAKE Command
+
+7.  The NOOP Command
+
+8.  The QUIT Command
+
+9.  Normative References
 
    [RFC1939]  Myers, J. and M. Rose, "Post Office Protocol - Version 3",
               STD 53, RFC 1939, DOI 10.17487/RFC1939, May 1996,
@@ -208,6 +217,15 @@ Godfrey                      Standards Track                    [Page 3]
               RFC 2595, DOI 10.17487/RFC2595, June 1999,
               <https://www.rfc-editor.org/info/rfc2595>.
 
+
+
+
+
+Godfrey                      Standards Track                    [Page 4]
+
+                              POP3-SLEEPING                 October 2022
+
+
    [RFC8314]  Moore, K. and C. Newman, "Cleartext Considered Obsolete:
               Use of Transport Layer Security (TLS) for Email Submission
               and Access", RFC 8314, DOI 10.17487/RFC8314, January 2018,
@@ -221,4 +239,42 @@ Author's Address
 
 
 
-Godfrey                      Standards Track                    [Page 4]
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Godfrey                      Standards Track                    [Page 5]
