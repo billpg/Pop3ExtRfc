@@ -45,6 +45,16 @@
                 a later time and so avoid the burden of all the steps needed to reconnect.
             </t>
 
+            <t>Under normal circumstances, a client, once it had downloaded messages and flagged 
+            them for deleteion, will send a QUIT command. This will commit those delete commands
+            and close down the connection. With this extension, the client may instead send a SLEE
+            command which will also commit those commands to delete messages but will instrad keep
+            the underlying connection open and the client may keep the opened connection shelved,
+            waiting for it to be used. After some time has passed and the client wishes to poll for
+             new messages again, the client may find it already has an opened connection shelved
+             and send it a WAKE command. The service will refresh its state and allow access to a 
+             new set of messages.</t>
+
             <t>
                 This document specifies an extension that enables this mode of operation.
                 It introduces a new SLEEP state, alongside the established
@@ -57,18 +67,12 @@
                 The underlying connection that remains open includes the TLS channel if present, 
                 including if that channel was opened by an explicit <xref target="RFC2595">STLS command</xref>
                 or implied by <xref target="RFC8314">use of TCP port 995</xref>.
-            </t>
-                
-            <t>
-                 Furthermore, the command to 
-                leave the TRANSACTION state and enter SLEEP will also commit any pending message deletes
-                made with the DELE command that would otherwise only be committed at the QUIT command.
-            </t>
+            </t>              
 
             <t>
-                POP3 is designed to work on a simple bulk-download-and-delete model, 
+                POP3 is designed to work within the simple bulk-download-and-delete model, 
                 eschewing more advanced features such as folder management. This 
-                extension is compatible with that model as the high-level operation of
+                extension maintains this model as the high-level operation of
                 client and server is unchanged, only adding the ability to shelve an
                 opened connection between polls.
             </t>
@@ -90,7 +94,6 @@
       <section anchor="iana_capa_sleeping" title="SLEEPING Capability">
         <t>
           <list hangIndent="8" style="hanging">
-
             <t hangText="CAPA tag:"><vspace blankLines="0" />SLEEPING</t>
             <t hangText="Arguments:"><vspace blankLines="0" />none</t>
             <t hangText="Added commands:"><vspace blankLines="0" />SLEE, WAKE</t>
@@ -112,7 +115,7 @@
       </t>
 
       <t>During a SLEEP state, the underlying TCP and TLS connections remain open and active. Access tp the mailbox 
-      is not possible but the client onetheless remains athenticated during this time.</t>
+      is not possible but the client nonetheless remains authenticated during this time.</t>
 
       <t>A client requests an opened connection enters the SLEEP state from the TRANSACTION state by a SLEE command. 
       If the server responds with a success +OK respose, the connection MUST exit the TRANSACTION state and enter
@@ -147,8 +150,8 @@
         <t>"CAPA" <xref target="RFC2449" /> is not on the list of commands that are valid to use during the SLEEP state.</t>
 
         <t>
-        Registered capabilities include a statement to which states each capability may be announced in, often using "both" as a
-        shorthand for "both the AUTHOIZATION and TRANSACTION states". As this document does not introduce a new state when the
+        Registered capabilities include a statement to which states each capability may be announced in, using "both" as a
+        shorthand for "both the AUTHORIZATION and TRANSACTION states". As this document does not introduce a new state when the
         CAPA command may be used, this document does not change the meaning of the capabilities registered.
         </t>
       </section>
