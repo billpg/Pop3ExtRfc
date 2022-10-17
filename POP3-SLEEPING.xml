@@ -7,9 +7,12 @@
 <?rfc sortrefs="yes" ?>
 <?rfc compact="yes" ?>
 <?rfc subcompact="no" ?>
-<rfc category="std" docName="draft-billpg-pop3-sleeping-00" ipr="none" submissionType="IETF" consensus="true"
-    xmlns:xi="http://www.w3.org/2001/XInclude">
-
+<rfc category="std" 
+     docName="draft-billpg-pop3-sleeping-00" 
+     ipr="none" 
+     submissionType="IETF" 
+     consensus="true"
+     xmlns:xi="http://www.w3.org/2001/XInclude">
 
     <front>
         <title abbrev="POP3-SLEEPING">POP3 - SLEEPING Extension</title>
@@ -114,19 +117,20 @@
       This RFC introduces the SLEEP state, alongside the established states of AUTHORIZATION, TRANSACTION and UPDATE.
       </t>
 
-      <t>During a SLEEP state, the underlying TCP and TLS connections remain open and active. Access tp the mailbox 
+      <t>During a SLEEP state, the underlying TCP and TLS connections remain open and active. Access to the mailbox 
       is not possible but the client nonetheless remains authenticated during this time.</t>
 
       <t>A client requests an opened connection enters the SLEEP state from the TRANSACTION state by a SLEE command. 
       If the server responds with a success +OK respose, the connection MUST exit the TRANSACTION state and enter
       the SLEEP state. If the server responds with a failure -ERR response, the opened connection MUST remain in the
-      TRANSACTION stete.</t>
+      TRANSACTION state.</t>
 
       <t>A client requests an opened connection returns to the TRANSACTION state by a WAKE command. If the server responds
-      with a success +OK response, the collection MUST exit the SLEEP state and return to the TRANSACION state. If the 
+      with a success +OK response, the collection MUST exit the SLEEP state and return to the TRANSACTION state. If the 
       server responds with a failure -ERR response, the opened connection MUST remain in the SLEEP state.</t>
       
-      <t>During the SLEEP state, the server MUST support these commands: NOOP, QUIT, WAKE.</t>
+      <t>During the SLEEP state, the server MUST support the commands NOOP, QUIT and WAKE. The server SHOULD respond with an error  
+          -ERR response to any other command that is not documented as applicable for the SLEEP state.</t>
 
       <t>
         <list hangIndent="10" style="empty">
@@ -141,9 +145,7 @@
     </section>
 
       <section anchor="other_capabilities" title="Considerations for other capabilities">
-        <t>"CAPA" <xref target="RFC2449" /> is not on the list of commands that are valid to use during the SLEEP state.</t>
-
-        <t>
+        <t>"CAPA" <xref target="RFC2449" /> is not on the list of commands that are valid to use during the SLEEP state. 
         Registered capabilities include a statement to which states each capability may be announced in, using "both" as a
         shorthand for "both the AUTHORIZATION and TRANSACTION states". As this document does not introduce a new state when the
         CAPA command may be used, this document does not change the meaning of the capabilities registered.
@@ -152,23 +154,51 @@
 
     <section anchor="slecommand" title="The SLEE Command">
 
-      <t>The client sends a SLEE command to complete a TRANSACTION state session. Any messages that were flagged for deletion by
-       DELE (and not reverted by RSET) MUST be deleted by the server if it responds with a +OK success response.</t>
+      <t>The client sends a SLEE command to complete a TRANSACTION state session and transition to the SLEEP state. A server that
+          responds to this command with a success +OK response MUST have deleted all messages flagged for deletion with DELE 
+          (but not reverted by RSET) and MUST have transitioned this connection to the SLEEP state. If the server cannot 
+          perform these steps, it MUST return an error -ERR response, remain in the TRANSACTION state and leave the state of 
+          the mailbox unchanged.</t>/>.
 
-      <t>The client MUST wait for a response to this command before sending any new comands, regardless of the 
-      <xref target="RFC2449">PIPELINING</xref> capability.</t>
-
-      <t>A service that responds with a success +OK response to a SLEE command MUST have completed both these steps. 
-      If the service cannot perform these steps, it MUST return an error -ERR response and leave the state of the mailbox unchnaged.</t>
-    </section>
+      <t>The client MUST wait for a response to this command before sending any additional commands, regardless of the presence
+          of the <xref target="RFC2449">PIPELINING</xref> capability in the response to the CAPA command.</t>
+    </section>r 
 
     <section anchor="wakecommand" title="The WAKE Command">
+        <t>The client sends a WAKE command as a request to complete a SLEEP state session and start a new TRANSACTION state.
+        If the server's response is a success +OK, the connection transitions to a new TRANSACTION state, as if the client had
+        disconnected and reconnected. The mailbox MAY have new messages and the numeric message-id values assigned to messages
+        MAY have been reassigned.</t>
+        
+        <t>If the server cannot transition to a new TRANSACTION state, it MUST respond with an error -ERR response. In this case, the
+            connection will remain in the SLEEP state. If the server's CAPA response includes the "RESP-CODES" extension 
+            <xref target="RFC2449" /> then the server MAY use response codes</xref> to assist identification of the underlying issue .</t> 
+            
+        <t>If the service's CAPA response includes "AUTH-RESP-CODE" <xref target="RFC3206" />
+            then the response MAY use the [AUTH] response code to indicate the authentication credentials supplied during the 
+            AUTHORIZATION state are no longer suitable.</t>
+        
+        <t>The server MAY use the response code [IN-USE] <xref target="RFC2449" /> to indicate access to the mailbox is locked
+            while another entity is making use of the mailbox. Clients MAY try the WAKE command again after a brief delay.</t>
+        
+        <t>The server MAY use the response code [SYS] (including [SYS/TEMP] and [SYS/PERM]) as described in <xref target="RFC3206" />.
+        
     </section>
 
     <section anchor="noopcommand" title="The NOOP Command">
+        <t>The NOOP command is valid during the SLEEP state to keep an idle connection open. It has identical meaning and behavior
+            as defined in <xref target="RFC1939" />.
     </section>
 
     <section anchor="quitcommand" title="The QUIT Command">
+        <t>The QUIT command is valid during the SLEEP state to request that the underlying connection is closed down. The server 
+            MUST respond with a success +OK response and then close the underlying connection down.</t>
+        
+        <t>NOTE: As DELE is not one of the commands listed as valid for during the SLEEP state and any message deletes will have 
+            been committed during handling of the SLEE command, the QUIT command's only purpose during
+            the SLEEP state is to close down the underlying connection. There is no pratical difference in this state between 
+            using QUIT and closing down the underlying connection from the client side, but the client may nonetheless prefer to use the
+            same mechanism to close down an open connection which will work in any of the many states.</t>
     </section>
 
 
