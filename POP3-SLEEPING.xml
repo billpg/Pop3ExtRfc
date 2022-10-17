@@ -158,11 +158,11 @@
           responds to this command with a success +OK response MUST have deleted all messages flagged for deletion with DELE 
           (but not reverted by RSET) and MUST have transitioned this connection to the SLEEP state. If the server cannot 
           perform these steps, it MUST return an error -ERR response, remain in the TRANSACTION state and leave the state of 
-          the mailbox unchanged.</t>/>.
+          the mailbox unchanged.</t>
 
       <t>The client MUST wait for a response to this command before sending any additional commands, regardless of the presence
           of the <xref target="RFC2449">PIPELINING</xref> capability in the response to the CAPA command.</t>
-    </section>r 
+    </section>
 
     <section anchor="wakecommand" title="The WAKE Command">
         <t>The client sends a WAKE command as a request to complete a SLEEP state session and start a new TRANSACTION state.
@@ -172,7 +172,7 @@
         
         <t>If the server cannot transition to a new TRANSACTION state, it MUST respond with an error -ERR response. In this case, the
             connection will remain in the SLEEP state. If the server's CAPA response includes the "RESP-CODES" extension 
-            <xref target="RFC2449" /> then the server MAY use response codes</xref> to assist identification of the underlying issue .</t> 
+            <xref target="RFC2449" /> then the server MAY use response codes to assist identification of the underlying issue .</t> 
             
         <t>If the service's CAPA response includes "AUTH-RESP-CODE" <xref target="RFC3206" />
             then the response MAY use the [AUTH] response code to indicate the authentication credentials supplied during the 
@@ -181,13 +181,14 @@
         <t>The server MAY use the response code [IN-USE] <xref target="RFC2449" /> to indicate access to the mailbox is locked
             while another entity is making use of the mailbox. Clients MAY try the WAKE command again after a brief delay.</t>
         
-        <t>The server MAY use the response code [SYS] (including [SYS/TEMP] and [SYS/PERM]) as described in <xref target="RFC3206" />.
+        <t>The server MAY use the response code [SYS] (including [SYS/TEMP] and [SYS/PERM]) as described in 
+            <xref target="RFC3206" />.</t>
         
     </section>
 
     <section anchor="noopcommand" title="The NOOP Command">
         <t>The NOOP command is valid during the SLEEP state to keep an idle connection open. It has identical meaning and behavior
-            as defined in <xref target="RFC1939" />.
+            as defined in <xref target="RFC1939" />.</t>
     </section>
 
     <section anchor="quitcommand" title="The QUIT Command">
@@ -211,6 +212,7 @@
             <xi:include href="http://xml2rfc.tools.ietf.org/public/rfc/bibxml/reference.RFC.2595.xml"/>
             <xi:include href="http://xml2rfc.tools.ietf.org/public/rfc/bibxml/reference.RFC.8314.xml"/>
             <xi:include href="http://xml2rfc.tools.ietf.org/public/rfc/bibxml/reference.RFC.2449.xml"/>
+            <xi:include href="http://xml2rfc.tools.ietf.org/public/rfc/bibxml/reference.RFC.3206.xml"/>
         </references>
     </back>
 
