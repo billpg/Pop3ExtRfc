@@ -43,19 +43,18 @@
                 When polling for new messages in a <xref target="RFC1939">POP3</xref> 
                 mailbox, both client and server need to repeatedly re-negotitate TCP and
                 TLS and re-authenticate every time the client attempts to poll for new messages.
-                By allowing a client to keep an underying connection open instead of closing
-                it down, the client is at liberty to resume using the opened connection at 
+                By allowing a client to keep an underlying connection open instead of closing
+                it down, the client is at liberty to pick up an opened connection at 
                 a later time and so avoid the burden of all the steps needed to reconnect.
             </t>
 
-            <t>Under normal circumstances, a client, once it had downloaded messages and flagged 
-            them for deleteion, will send a QUIT command. This will commit those delete commands
-            and close down the connection. With this extension, the client may instead send a SLEE
-            command which will also commit those commands to delete messages but will instrad keep
-            the underlying connection open and the client may keep the opened connection shelved,
-            waiting for it to be used. After some time has passed and the client wishes to poll for
+            <t>With this extension, the client may, instead of using the QUIT command, send a SLEE
+            command. This will, like QUIT, commit those requests to delete messages. However, unlike
+            the QUIT command, it will keep
+            the underlying connection open, which the client may keep shelved. 
+            After some time has passed and the client wishes to poll for
              new messages again, the client may find it already has an opened connection shelved
-             and send it a WAKE command. The service will refresh its state and allow access to a 
+             and send it a WAKE command. The server will refresh its state and allow access to a 
              new set of messages.</t>
 
             <t>
@@ -120,41 +119,37 @@
       <t>During a SLEEP state, the underlying TCP and TLS connections remain open and active. Access to the mailbox 
       is not possible but the client nonetheless remains authenticated during this time.</t>
 
-      <t>A client requests an opened connection enters the SLEEP state from the TRANSACTION state by a SLEE command. 
-      If the server responds with a success +OK respose, the connection MUST exit the TRANSACTION state and enter
-      the SLEEP state. If the server responds with a failure -ERR response, the opened connection MUST remain in the
-      TRANSACTION state.</t>
-
-      <t>A client requests an opened connection returns to the TRANSACTION state by a WAKE command. If the server responds
-      with a success +OK response, the collection MUST exit the SLEEP state and return to the TRANSACTION state. If the 
-      server responds with a failure -ERR response, the opened connection MUST remain in the SLEEP state.</t>
+      <t>A client requests a state transition from TRANSACTION to SLEEP by a SLEE command, and from SLEEP to TRANSACTION
+       by a WAKE command. The server responds with a success +OK response to either command to indicate the state transition
+        is complete, or with an error -ERR response to indicate it can not transition state at this time and the connection 
+        remains in the previous state.</t>
       
-      <t>During the SLEEP state, the server MUST support the commands NOOP, QUIT and WAKE. The server SHOULD respond with an error  
-          -ERR response to any other command that is not documented as applicable for the SLEEP state.</t>
+      <t>During the SLEEP state, the server MUST support the commands NOOP, QUIT and WAKE as described below. 
+        The server SHOULD respond with an error  
+          -ERR response to any other command that is not documented as valid for the SLEEP state.</t>
 
       <t>
-        <list hangIndent="10" style="empty">
-          <t>
             NOTE: This document STRONGLY encourages those services that place a lock on a mailbox during a TRANSACTION state
-            to release those locks during a SLEEP state and allow other concurrent requests.
+            to release those locks during a SLEEP state and allow other concurrent requests, re-aquiring that lock on the WAKE 
+            command.
             It is permitted for the WAKE command to fail with a "-ERR [INUSE]" failure response if a separate connection has taken the
             lock for the mailbox during the SLEEP state.
-          </t>
-        </list>
       </t>
     </section>
 
-      <section anchor="other_capabilities" title="Considerations for other capabilities">
-        <t>"CAPA" <xref target="RFC2449" /> is not on the list of commands that are valid to use during the SLEEP state. 
+      <section anchor="other_capabilities" title="Considerations for documented capabilities">
+        <t>CAPA <xref target="RFC2449" /> is not on the list of commands that are valid to use during the SLEEP state. 
         Registered capabilities include a statement to which states each capability may be announced in, using "both" as a
         shorthand for "both the AUTHORIZATION and TRANSACTION states". As this document does not introduce a new state when the
-        CAPA command may be used, this document does not change the meaning of the capabilities registered.
+        CAPA command may be used, this document does not change the meaning of any capabilities registered.
         </t>
       </section>
 
     <section anchor="slecommand" title="The SLEE Command">
 
-      <t>The client sends a SLEE command to complete a TRANSACTION state session and transition to the SLEEP state. A server that
+      <t>The client sends a SLEE command to complete a TRANSACTION state session and transition to the SLEEP state.</t>
+      
+      <t> A server that
           responds to this command with a success +OK response MUST have deleted all messages flagged for deletion with DELE 
           (but not reverted by RSET) and MUST have transitioned this connection to the SLEEP state. If the server cannot 
           perform these steps, it MUST return an error -ERR response, remain in the TRANSACTION state and leave the state of 
@@ -165,14 +160,16 @@
     </section>
 
     <section anchor="wakecommand" title="The WAKE Command">
-        <t>The client sends a WAKE command as a request to complete a SLEEP state session and start a new TRANSACTION state.
+        <t>The client sends a WAKE command as a request to complete a SLEEP state session and start a new TRANSACTION state.</t>
+
+        <t>
         If the server's response is a success +OK, the connection transitions to a new TRANSACTION state, as if the client had
-        disconnected and reconnected. The mailbox MAY have new messages and the numeric message-id values assigned to messages
-        MAY have been reassigned.</t>
+        disconnected, reconnected and reauthenticated. The mailbox MAY have new messages and the numeric message-id values 
+        assigned to messages MAY have been reassigned.</t>
         
         <t>If the server cannot transition to a new TRANSACTION state, it MUST respond with an error -ERR response. In this case, the
             connection will remain in the SLEEP state. If the server's CAPA response includes the "RESP-CODES" extension 
-            <xref target="RFC2449" /> then the server MAY use response codes to assist identification of the underlying issue .</t> 
+            <xref target="RFC2449" /> then the server MAY use response codes to assist identification of the underlying issue.</t> 
             
         <t>If the service's CAPA response includes "AUTH-RESP-CODE" <xref target="RFC3206" />
             then the response MAY use the [AUTH] response code to indicate the authentication credentials supplied during the 
