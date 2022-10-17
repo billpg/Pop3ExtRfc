@@ -131,12 +131,6 @@
       <t>
         <list hangIndent="10" style="empty">
           <t>
-            NOTE: This document STRONGLY encourages that during a sleep state, service implementations return error
-            responses to any command other that the three listed above. This will assist those developing clients 
-            from wrongly assuming commands such STAT or UIDL could be used during a SLEEP state to poll for new messages.
-          </t>
-
-          <t>
             NOTE: This document STRONGLY encourages those services that place a lock on a mailbox during a TRANSACTION state
             to release those locks during a SLEEP state and allow other concurrent requests.
             It is permitted for the WAKE command to fail with a "-ERR [INUSE]" failure response if a separate connection has taken the
