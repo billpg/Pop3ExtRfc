@@ -1,0 +1,112 @@
+
+
+
+
+Internet Engineering Task Force                               W. Godfrey
+                                                       billpg industries
+                                                            October 2022
+
+
+                   POP3 - The DELI Command Extension
+                       draft-billpg-pop3-deli-00
+
+Abstract
+
+   An extension to POP3 allowing clients to delete messages with
+   immediate effect.
+
+Table of Contents
+
+   1.  Introduction  . . . . . . . . . . . . . . . . . . . . . . . .   1
+     1.1.  Requirements Language . . . . . . . . . . . . . . . . . .   1
+   2.  Capability  . . . . . . . . . . . . . . . . . . . . . . . . .   1
+     2.1.  DELI Capability . . . . . . . . . . . . . . . . . . . . .   1
+   3.  The DELI Command  . . . . . . . . . . . . . . . . . . . . . .   2
+   4.  Normative References  . . . . . . . . . . . . . . . . . . . .   2
+   Author's Address  . . . . . . . . . . . . . . . . . . . . . . . .   2
+
+1.  Introduction
+
+   When downloading many messages using POP3 [RFC1939],
+
+1.1.  Requirements Language
+
+   The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT",
+   "SHOULD", "SHOULD NOT", "RECOMMENDED", "MAY", and "OPTIONAL" in this
+   document are to be interpreted as described in RFC 2119 [RFC2119].
+
+2.  Capability
+
+   A service implementing this extension indicates support by including
+   the capability "DELI" in response to a CAPA command.
+
+2.1.  DELI Capability
+
+   CAPA tag:
+           DELI
+
+   Arguments:
+           none
+
+   Added commands:
+           DELI
+
+
+
+Godfrey                      Standards Track                    [Page 1]
+
+                                POP3-DELI                   October 2022
+
+
+   Announced states / possible differences:
+           both / no
+
+   Commands valid in states:
+           TRANSACTION
+
+   Specification reference:
+           This document
+
+   Discussion:
+           The presence of the "DELI" capability indicates the DELI
+           command is supported during the TRANSACTION state.
+
+3.  The DELI Command
+
+4.  Normative References
+
+   [RFC1939]  Myers, J. and M. Rose, "Post Office Protocol - Version 3",
+              STD 53, RFC 1939, DOI 10.17487/RFC1939, May 1996,
+              <https://www.rfc-editor.org/info/rfc1939>.
+
+   [RFC2119]  Bradner, S., "Key words for use in RFCs to Indicate
+              Requirement Levels", BCP 14, RFC 2119,
+              DOI 10.17487/RFC2119, March 1997,
+              <https://www.rfc-editor.org/info/rfc2119>.
+
+   [RFC2449]  Gellens, R., Newman, C., and L. Lundblade, "POP3 Extension
+              Mechanism", RFC 2449, DOI 10.17487/RFC2449, November 1998,
+              <https://www.rfc-editor.org/info/rfc2449>.
+
+   [RFC2595]  Newman, C., "Using TLS with IMAP, POP3 and ACAP",
+              RFC 2595, DOI 10.17487/RFC2595, June 1999,
+              <https://www.rfc-editor.org/info/rfc2595>.
+
+   [RFC3206]  Gellens, R., "The SYS and AUTH POP Response Codes",
+              RFC 3206, DOI 10.17487/RFC3206, February 2002,
+              <https://www.rfc-editor.org/info/rfc3206>.
+
+   [RFC8314]  Moore, K. and C. Newman, "Cleartext Considered Obsolete:
+              Use of Transport Layer Security (TLS) for Email Submission
+              and Access", RFC 8314, DOI 10.17487/RFC8314, January 2018,
+              <https://www.rfc-editor.org/info/rfc8314>.
+
+Author's Address
+
+   William Godfrey
+   billpg industries
+   URI:   https://billpg.com/
+
+
+
+Godfrey                      Standards Track                    [Page 2]

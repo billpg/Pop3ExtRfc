@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="US-ASCII"?>
+
+<?rfc strict="yes" ?>
+<?rfc toc="yes"?>
+<?rfc tocdepth="4"?>
+<?rfc symrefs="yes"?>
+<?rfc sortrefs="yes" ?>
+<?rfc compact="yes" ?>
+<?rfc subcompact="no" ?>
+<rfc category="std" 
+     docName="draft-billpg-pop3-deli-00" 
+     ipr="none" 
+     submissionType="IETF" 
+     consensus="true"
+     xmlns:xi="http://www.w3.org/2001/XInclude">
+
+    <front>
+        <title abbrev="POP3-DELI">POP3 - The DELI Command Extension</title>
+        <author fullname="William Godfrey" initials="W." surname="Godfrey">
+            <organization>billpg industries</organization>
+            <address>
+                <uri>https://billpg.com/</uri>
+            </address>
+        </author>
+        <date month="October" year="2022" />
+        <area>General</area>
+        <workgroup>Internet Engineering Task Force</workgroup>
+        <keyword>pop3</keyword>
+        <abstract>
+            <t>
+                An extension to POP3 allowing clients to delete messages with immediate
+                effect.
+            </t>
+        </abstract>
+    </front>
+
+    <middle>
+        <section title="Introduction">
+
+            <t>When downloading many messages using POP3 <xref target="RFC1939"/>,
+            </t>
+
+            <section title="Requirements Language">
+                <t>
+                    The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT",
+                    "SHOULD", "SHOULD NOT", "RECOMMENDED", "MAY", and "OPTIONAL" in this
+                    document are to be interpreted as described in 
+                    <xref target="RFC2119">RFC 2119</xref>.
+                </t>
+            </section>
+        </section>
+
+    <section anchor="capability" title="Capability">
+      <t>A service implementing this extension indicates support by including
+      the capability "DELI" in response to a CAPA command.</t>
+
+      <section anchor="iana_capa_deli" title="DELI Capability">
+        <t>
+          <list hangIndent="8" style="hanging">
+            <t hangText="CAPA tag:"><vspace blankLines="0" />DELI</t>
+            <t hangText="Arguments:"><vspace blankLines="0" />none</t>
+            <t hangText="Added commands:"><vspace blankLines="0" />DELI</t>
+            <t hangText="Announced states / possible differences:"><vspace blankLines="0" />both / no</t>
+            <t hangText="Commands valid in states:"><vspace blankLines="0" />TRANSACTION</t>
+            <t hangText="Specification reference:"><vspace blankLines="0" />This document</t>
+            <t hangText="Discussion:"><vspace blankLines="0" />
+              The presence of the "DELI" capability indicates the DELI command is supported during
+                the TRANSACTION state.
+            </t>
+          </list>
+        </t>
+      </section>
+    </section>
+
+
+    <section anchor="deli_command" title="The DELI Command">
+    </section>
+
+
+  </middle>
+
+    <back>
+        <references title="Normative References">
+            <xi:include href="http://xml2rfc.tools.ietf.org/public/rfc/bibxml/reference.RFC.2119.xml"/>
+            <xi:include href="http://xml2rfc.tools.ietf.org/public/rfc/bibxml/reference.RFC.1939.xml"/>
+            <xi:include href="http://xml2rfc.tools.ietf.org/public/rfc/bibxml/reference.RFC.2595.xml"/>
+            <xi:include href="http://xml2rfc.tools.ietf.org/public/rfc/bibxml/reference.RFC.8314.xml"/>
+            <xi:include href="http://xml2rfc.tools.ietf.org/public/rfc/bibxml/reference.RFC.2449.xml"/>
+            <xi:include href="http://xml2rfc.tools.ietf.org/public/rfc/bibxml/reference.RFC.3206.xml"/>
+        </references>
+    </back>
+
+</rfc>
+
+
